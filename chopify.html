@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./style.css"/>
+    <title>Chopify - Restaurant QR Ordering System</title>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="logo">🍽️ Chopify</h1>
+            <p class="tagline">Digital Menu & QR Ordering System for Nigerian Restaurants</p>
+        </div>
+
+        <div id="authSection" class="auth-section">
+            <div class="tab-buttons">
+                <a href="sign-up.html"><button class="tab-btn active" onclick="showTab('customer')">Customer</button></a>
+                <button class="tab-btn" onclick="showTab('restaurant')">Restaurant</button>
+            </div>
+
+            <div id="customerTab">
+                <h2 style="text-align: center; margin-bottom: 20px; color: #2c3e50;">Scan QR Code or Enter Restaurant ID</h2>
+                <div class="form-group">
+                    <label for="restaurantId">Restaurant ID:</label>
+                    <input type="text" id="restaurantId" placeholder="Enter restaurant ID (e.g., Lagos_Jollof_Palace)">
+                </div>
+                <button class="btn" onclick="accessRestaurant()">Access Menu</button>
+            </div>
+
+            <div id="restaurantTab" class="hidden">
+                <h2 style="text-align: center; margin-bottom: 20px; color: #2c3e50;">Restaurant Login/Register</h2>
+                <div class="form-group">
+                    <label for="restaurantName">Restaurant Name:</label>
+                    <input type="text" id="restaurantName" placeholder="e.g., Lagos Jollof Palace">
+                </div>
+                <div class="form-group">
+                    <label for="restaurantPassword">Password:</label>
+                    <input type="password" id="restaurantPassword" placeholder="Enter password">
+                </div>
+                <div class="form-group">
+                    <label for="restaurantLocation">Location:</label>
+                    <input type="text" id="restaurantLocation" placeholder="e.g., Victoria Island, Lagos">
+                </div>
+                <button class="btn" onclick="restaurantLogin()">Login/Register</button>
+            </div>
+        </div>
+
+        <div id="mainApp" class="main-app hidden">
+            <div class="nav-menu">
+                <button class="nav-btn active" onclick="showSection('menu')">Menu</button>
+                <button class="nav-btn" onclick="showSection('cart')">Cart (<span id="cartCount">0</span>)</button>
+                <button class="nav-btn" onclick="showSection('reviews')">Reviews</button>
+                <button class="nav-btn restaurant-only hidden" onclick="showSection('manage')">Manage</button>
+                <button class="nav-btn restaurant-only hidden" onclick="showSection('analytics')">Analytics</button>
+                <button class="nav-btn restaurant-only hidden" onclick="showSection('setup')">Setup</button>
+                <button class="nav-btn" onclick="logout()">Logout</button>
+            </div>
+
+            <div id="menuSection">
+                <h2 style="text-align: center; margin-bottom: 30px; color: #2c3e50;">Restaurant Menu</h2>
+                <div id="menuGrid" class="menu-grid"></div>
+            </div>
+
+            <div id="cartSection" class="hidden">
+                <h2 style="text-align: center; margin-bottom: 30px; color: #2c3e50;">Your Order</h2>
+                <div id="cartItems"></div>
+                <div id="cartTotal" class="cart-total"></div>
+                <button class="btn btn-success" onclick="checkout()" style="width: 100%; margin-top: 20px;">Proceed to Checkout</button>
+            </div>
+
+            <div id="reviewsSection" class="hidden">
+                <h2 style="text-align: center; margin-bottom: 30px; color: #2c3e50;">Leave a Review</h2>
+                <div class="reviews-section">
+                    <div class="form-group">
+                        <label for="reviewRating">Rating:</label>
+                        <select id="reviewRating">
+                            <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
+                            <option value="4">⭐⭐⭐⭐ Good</option>
+                            <option value="3">⭐⭐⭐ Average</option>
+                            <option value="2">⭐⭐ Poor</option>
+                            <option value="1">⭐ Terrible</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="reviewComment">Comment:</label>
+                        <textarea id="reviewComment" rows="4" placeholder="Tell us about your experience..."></textarea>
+                    </div>
+                    <button class="btn" onclick="submitReview()">Submit Review</button>
+                </div>
+            </div>
+
+            <div id="manageSection" class="hidden restaurant-only">
+                <h2 style="text-align: center; margin-bottom: 30px; color: #2c3e50;">Manage Menu</h2>
+                <button class="btn" onclick="showAddItemForm()">Add New Item</button>
+                <div id="manageGrid" class="menu-grid"></div>
+            </div>
+
+            <div id="analyticsSection" class="hidden restaurant-only">
+                <h2 style="text-align: center; margin-bottom: 30px; color: #2c3e50;">Restaurant Analytics</h2>
+                <div class="analytics-grid">
+                    <div class="analytics-card">
+                        <h3>Total Orders</h3>
+                        <div class="analytics-number" id="totalOrders">0</div>
+                    </div>
+                    <div class="analytics-card">
+                        <h3>Total Revenue</h3>
+                        <div class="analytics-number" id="totalRevenue">₦0</div>
+                    </div>
+                    <div class="analytics-card">
+                        <h3>Average Rating</h3>
+                        <div class="analytics-number" id="avgRating">0.0</div>
+                    </div>
+                </div>
+                
+                <div class="reviews-section">
+                    <h3>Most Ordered Items</h3>
+                    <div id="popularItems"></div>
+                </div>
+
+                <div class="reviews-section">
+                    <h3>Customer Reviews</h3>
+                    <div id="customerReviews"></div>
+                </div>
+            </div>
+
+            <div id="setupSection" class="hidden restaurant-only">
+                <h2 style="text-align: center; margin-bottom: 30px; color: #2c3e50;">Restaurant Setup</h2>
+                <div class="restaurant-setup">
+                    <h3>Customize Your Restaurant</h3>
+                    <div class="form-group">
+                        <label for="restaurantDescription">Description:</label>
+                        <textarea id="restaurantDescription" rows="3" placeholder="Describe your restaurant..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Theme Color:</label>
+                        <div class="color-picker">
+                            <div class="color-option selected" style="background: #667eea" onclick="selectColor('#667eea')"></div>
+                            <div class="color-option" style="background: #2ecc71" onclick="selectColor('#2ecc71')"></div>
+                            <div class="color-option" style="background: #e74c3c" onclick="selectColor('#e74c3c')"></div>
+                            <div class="color-option" style="background: #f39c12" onclick="selectColor('#f39c12')"></div>
+                            <div class="color-option" style="background: #9b59b6" onclick="selectColor('#9b59b6')"></div>
+                        </div>
+                    </div>
+                    <button class="btn" onclick="saveRestaurantSettings()">Save Settings</button>
+                </div>
+
+                <div class="qr-code">
+                    <h3>Your QR Code</h3>
+                    <div id="qrCodeDisplay" style="font-size: 4em; margin: 20px 0;">📱</div>
+                    <p>Restaurant ID: <strong id="restaurantIdDisplay"></strong></p>
+                    <p>Customers can scan this QR code to access your menu</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cart Widget (visible on menu page) -->
+    <div id="cartWidget" class="cart hidden">
+        <h3 style="margin-bottom: 15px; color: #2c3e50;">Your Order</h3>
+        <div id="cartWidgetItems"></div>
+        <div id="cartWidgetTotal" class="cart-total"></div>
+        <button class="btn btn-success" onclick="showSection('cart')" style="width: 100%; margin-top: 10px;">View Cart</button>
+    </div>
+
+    <!-- Add Item Modal -->
+    <div id="addItemModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeAddItemModal()">&times;</span>
+            <h2>Add New Menu Item</h2>
+            <div class="form-group">
+                <label for="itemName">Item Name:</label>
+                <input type="text" id="itemName" placeholder="e.g., Jollof Rice">
+            </div>
+            <div class="form-group">
+                <label for="itemDescription">Description:</label>
+                <textarea id="itemDescription" rows="3" placeholder="Describe this dish..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="itemPrice">Price (₦):</label>
+                <input type="number" id="itemPrice" placeholder="e.g., 2500">
+            </div>
+            <div class="form-group">
+                <label for="itemCategory">Category:</label>
+                <select id="itemCategory">
+                    <option value="Rice Dishes">Rice Dishes</option>
+                    <option value="Soups">Soups</option>
+                    <option value="Proteins">Proteins</option>
+                    <option value="Beverages">Beverages</option>
+                    <option value="Desserts">Desserts</option>
+                    <option value="Appetizers">Appetizers</option>
+                </select>
+            </div>
+            <button class="btn" onclick="addMenuItem()">Add Item</button>
+        </div>
+    </div>
+
+    <!-- Checkout Modal -->
+    <div id="checkoutModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeCheckoutModal()">&times;</span>
+            <h2>Checkout</h2>
+            <div id="checkoutItems"></div>
+            <div id="checkoutTotal" class="cart-total"></div>
+            <div class="form-group">
+                <label for="customerName">Your Name:</label>
+                <input type="text" id="customerName" placeholder="Enter your name">
+            </div>
+            <div class="form-group">
+                <label for="customerPhone">Phone Number:</label>
+                <input type="tel" id="customerPhone" placeholder="Enter your phone number">
+            </div>
+            <div class="form-group">
+                <label for="paymentMethod">Payment Method:</label>
+                <select id="paymentMethod">
+                    <option value="cash">Cash</option>
+                    <option value="card">Card</option>
+                    <option value="transfer">Bank Transfer</option>
+                </select>
+            </div>
+            <button class="btn btn-success" onclick="processOrder()">Complete Order</button>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentUser = null;
+        let currentRole = null;
+        let currentRestaurant = null;
+        let cart = [];
+        let restaurants = {};
+        let orders = {};
+        let reviews = {};
+
+        // Sample restaurant data
+        const sampleRestaurants = {
+            'Lagos_Jollof_Palace': {
+                name: 'Lagos Jollof Palace',
+                location: 'Victoria Island, Lagos',
+                password: 'admin123',
+                description: 'Authentic Nigerian cuisine with the best Jollof rice in Lagos',
+                theme: '#667eea',
+                menu: [
+                    {
+                        id: 1,
+                        name: 'Party Jollof Rice',
+                        description: 'Smoky, perfectly spiced jollof rice with tender beef and chicken',
+                        price: 3500,
+                        category: 'Rice Dishes'
+                    },
+                    {
+                        id: 2,
+                        name: 'Pepper Soup',
+                        description: 'Spicy traditional pepper soup with assorted meat',
+                        price: 2800,
+                        category: 'Soups'
+                    },
+                    {
+                        id: 3,
+                        name: 'Suya Platter',
+                        description: 'Grilled seasoned beef with spicy suya spice',
+                        price: 2200,
+                        category: 'Proteins'
+                    },
+                    {
+                        id: 4,
+                        name: 'Palm Wine',
+                        description: 'Fresh palm wine served chilled',
+                        price: 800,
+                        category: 'Beverages'
+                    },
+                    {
+                        id: 5,
+                        name: 'Chin Chin',
+                        description: 'Crispy fried pastry cubes - perfect dessert',
+                        price: 1200,
+                        category: 'Desserts'
+                    }
+                ]
+            },
+            'Abuja_Bukka_Express': {
+                name: 'Abuja Bukka Express',
+                location: 'Wuse II, Abuja',
+                password: 'admin123',
+                description: 'Fast, delicious Nigerian meals for the busy professional',
+                theme: '#2ecc71',
+                menu: [
+                    {
+                        id: 1,
+                        name: 'Egusi Soup with Pounded Yam',
+                        description: 'Rich egusi soup with fresh vegetables and pounded yam',
+                        price: 4200,
+                        category: 'Soups'
+                    },
+                    {
+                        id: 2,
+                        name: 'Fried Rice',
+                        description: 'Colorful fried rice with mixed vegetables and protein',
+                        price: 3000,
+                        category: 'Rice Dishes'
+                    },
+                    {
+                        id: 3,
+                        name: 'Zobo',
+                        description: 'Refreshing hibiscus drink with natural flavors',
+                        price: 600,
+                        category: 'Beverages'
+                    }
+                ]
+            }
+        };
+
+        // Initialize with sample data
+        restaurants = { ...sampleRestaurants };
+
+        // Initialize orders and reviews for sample restaurants
+        Object.keys(sampleRestaurants).forEach(restaurantId => {
+            orders[restaurantId] = [];
+            reviews[restaurantId] = [];
+        });
+
+        // Tab switching
+        function showTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[onclick="showTab('${tab}')"]`).classList.add('active');
+            
+            document.getElementById('customerTab').classList.toggle('hidden', tab !== 'customer');
+            document.getElementById('restaurantTab').classList.toggle('hidden', tab !== 'restaurant');
+        }
+
+        // Section switching
+        function showSection(section) {
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[onclick="showSection('${section}')"]`).classList.add('active');
+            
+            document.querySelectorAll('#mainApp > div').forEach(div => div.classList.add('hidden'));
+            document.getElementById(section + 'Section').classList.remove('hidden');
+            
+            if (section === 'menu') {
+                document.getElementById('cartWidget').classList.remove('hidden');
+                displayMenu();
+            } else {
+                document.getElementById('cartWidget').classList.add('hidden');
+            }
+            
+            if (section === 'cart') {
+                displayCart();
+            }
+            
+            if (section === 'manage' && currentRole === 'restaurant') {
+                displayManageMenu();
+            }
+            
+            if (section === 'analytics' && currentRole === 'restaurant') {
+                displayAnalytics();
+            }
+            
+            if (section === 'setup' && currentRole === 'restaurant') {
+                displaySetup();
+            }
+        }
+
+        // Customer access
+        function accessRestaurant() {
+            const restaurantId = document.getElementById('restaurantId').value.trim();
+            if (!restaurantId) {
+                showMessage('Please enter a restaurant ID', 'error');
+                return;
+            }
+            
+            if (!restaurants[restaurantId]) {
+                showMessage('Restaurant not found', 'error');
+                return;
+            }
+            
+            currentUser = restaurantId;
+            currentRole = 'customer';
+            currentRestaurant = restaurants[restaurantId];
+            
+            document.getElementById('authSection').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            
+            // Hide restaurant-only features
+            document.querySelectorAll('.restaurant-only').forEach(el => el.classList.add('hidden'));
+            
+            showSection('menu');
+        }
+
+        // Restaurant login
+        function restaurantLogin() {
+            const name = document.getElementById('restaurantName').value.trim();
+            const password = document.getElementById('restaurantPassword').value.trim();
+            const location = document.getElementById('restaurantLocation').value.trim();
+            
+            if (!name || !password || !location) {
+                showMessage('Please fill in all fields', 'error');
+                return;
+            }
+            
+            const restaurantId = name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+            
+            if (restaurants[restaurantId]) {
+                if (restaurants[restaurantId].password === password) {
+                    currentUser = restaurantId;
+                    currentRole = 'restaurant';
+                    currentRestaurant = restaurants[restaurantId];
+                    
+                    document.getElementById('authSection').classList.add('hidden');
+                    document.getElementById('mainApp').classList.remove('hidden');
+                    
+                    // Show restaurant-only features
+                    document.querySelectorAll('.restaurant-only').forEach(el => el.classList.remove('hidden'));
+                    
+                    showSection('manage');
+                } else {
+                    showMessage('Invalid password',)
+                }
